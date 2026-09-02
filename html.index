@@ -1,1 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Toolbox Inventory</title>
+<style>
+:root{
+  --navy:#152d40;
+  --orange:#f28c28;
+  --green:#238636;
+  --red:#c62828;
+  --bg:#eef2f5;
+  --card:#ffffff;
+  --muted:#6b7785;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--navy);
+  font-family:Arial,Helvetica,sans-serif;
+}
+.app{
+  width:min(1180px,96vw);
+  margin:24px auto;
+  background:#fff;
+  border:3px solid var(--navy);
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 14px 34px rgba(0,0,0,.18);
+}
+header{
+  background:var(--navy);
+  color:#fff;
+  padding:18px 22px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+}
+header h1{margin:0;font-size:clamp(24px,3vw,38px)}
+header p{margin:4px 0 0;color:#dbe6ee}
+.progress{
+  min-width:220px;
+  background:#0d2231;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:12px;
+  padding:10px 12px;
+}
+.progressbar{
+  height:10px;
+  background:#40596b;
+  border-radius:99px;
+  overflow:hidden;
+  margin-top:7px;
+}
+.progressfill{
+  width:0;
+  height:100%;
+  background:var(--orange);
+  transition:.25s;
+}
+main{padding:20px}
+.intro{
+  background:#f7f9fb;
+  border:1px solid #d9e1e7;
+  border-radius:12px;
+  padding:14px 16px;
+  margin-bottom:18px;
+}
+.toolbox-wrap{
+  display:grid;
+  grid-template-columns:minmax(0,680px) minmax(250px,1fr);
+  gap:20px;
+  align-items:start;
+}
+.photo-stage{
+  position:relative;
+  width:100%;
+  max-width:680px;
+  margin:auto;
+  border-radius:15px;
+  overflow:hidden;
+  background:#111;
+  box-shadow:0 8px 22px rgba(0,0,0,.2);
+}
+.photo-stage img{display:block;width:100%;height:auto}
+.hotspot{
+  position:absolute;
+  border:3px solid rgba(242,140,40,.7);
+  background:rgba(242,140,40,.08);
+  border-radius:10px;
+  cursor:pointer;
+  transition:.18s;
+}
+.hotspot:hover,.hotspot:focus{
+  background:rgba(242,140,40,.25);
+  border-color:#fff;
+  outline:none;
+}
+.hotspot span{
+  position:absolute;
+  left:8px;top:8px;
+  background:rgba(21,45,64,.9);
+  color:#fff;
+  padding:5px 8px;
+  border-radius:7px;
+  font-weight:700;
+  font-size:13px;
+}
+.hotspot.done{
+  border-color:#32a852;
+  background:rgba(35,134,54,.20);
+}
+.hotspot.missing{
+  border-color:#df3d3d;
+  background:rgba(198,40,40,.20);
+}
+.hotspot.done span{background:var(--green)}
+.hotspot.missing span{background:var(--red)}
 
+/* Coordinates are based on the full toolbox photo */
+#drawer1{left:9.0%;top:31.0%;width:82%;height:11.2%}
+#drawer2{left:10.0%;top:42.3%;width:40%;height:7.3%}
+#drawer3{left:50.0%;top:42.3%;width:40%;height:7.3%}
+#drawer4{left:10.0%;top:49.7%;width:80%;height:7.8%}
+#drawer5{left:10.0%;top:57.6%;width:80%;height:8.4%}
+
+.side{
+  background:#f7f9fb;
+  border:1px solid #d9e1e7;
+  border-radius:14px;
+  padding:16px;
+}
+.side h2{margin:0 0 10px}
+.drawer-list{display:grid;gap:9px}
+.drawer-row{
+  border:1px solid #ccd7df;
+  background:#fff;
+  border-radius:10px;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  cursor:pointer;
+}
+.drawer-row:hover{border-color:var(--orange)}
+.badge{
+  border-radius:999px;
+  padding:4px 8px;
+  font-size:12px;
+  font-weight:700;
+  background:#e8edf1;
+  color:#4c5e6a;
+  white-space:nowrap;
+}
+.badge.ok{background:#dff3e4;color:#176329}
+.badge.bad{background:#fde3e3;color:#9d2020}
+.submit{
+  width:100%;
+  margin-top:14px;
+  padding:13px;
+  border:0;
+  border-radius:10px;
+  background:var(--navy);
+  color:#fff;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+.submit:disabled{opacity:.4;cursor:not-allowed}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
+
+/* modal */
+.modal{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(0,0,0,.72);
+  z-index:100;
+}
+.modal.open{display:flex}
+.panel{
+  width:min(1100px,96vw);
+  max-height:94vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:16px;
+  border:3px solid var(--navy);
+  box-shadow:0 16px 48px rgba(0,0,0,.45);
+}
+.panel-head{
+  position:sticky;top:0;z-index:3;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
+  background:var(--navy);
+  color:#fff;
+  padding:13px 16px;
+}
+.panel-head h2{margin:0}
+.close{
+  border:1px solid rgba(255,255,255,.5);
+  background:transparent;color:#fff;
+  border-radius:8px;padding:7px 10px;cursor:pointer;font-size:16px
+}
+.panel-body{padding:16px}
+.gallery-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tab{
+  padding:8px 11px;border:1px solid #b9c7d0;background:#fff;border-radius:9px;cursor:pointer;font-weight:700;color:var(--navy)
+}
+.tab.active{background:var(--orange);border-color:var(--orange);color:#fff}
+.drawer-image{
+  display:block;
+  width:100%;
+  max-height:58vh;
+  object-fit:contain;
+  background:#111;
+  border-radius:12px;
+}
+.check-card{
+  margin-top:14px;
+  border:2px solid #d5dee5;
+  border-radius:12px;
+  padding:14px;
+}
+.check-card h3{margin:0 0 10px}
+.options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.option{
+  border:2px solid #ccd7df;
+  border-radius:10px;
+  padding:13px;
+  cursor:pointer;
+  font-weight:700;
+  display:flex;
+  gap:9px;
+  align-items:center;
+}
+.option input{transform:scale(1.25)}
+.option:has(input:checked){border-color:var(--orange);background:#fff7ee}
+.missing-box{display:none;margin-top:12px}
+.missing-box.show{display:block}
+.missing-box textarea{
+  width:100%;min-height:90px;resize:vertical;border:1px solid #aebbc4;border-radius:9px;padding:10px;font:inherit
+}
+.save{
+  margin-top:12px;
+  border:0;border-radius:9px;
+  background:var(--orange);color:#fff;
+  padding:11px 18px;font-weight:700;font-size:16px;cursor:pointer
+}
+.save:disabled{opacity:.45;cursor:not-allowed}
+.toast{
+  position:fixed;left:50%;bottom:20px;transform:translateX(-50%);
+  background:#142c3f;color:#fff;padding:10px 14px;border-radius:9px;
+  display:none;z-index:150
+}
+.toast.show{display:block}
+@media(max-width:850px){
+  .toolbox-wrap{grid-template-columns:1fr}
+  .options{grid-template-columns:1fr}
+}
+
+.drawer-image-wrap{
+  position:relative;
+  display:inline-block;
+  width:auto;
+  max-width:100%;
+  background:#111;
+  border-radius:12px;
+  overflow:hidden;
+  left:50%;
+  transform:translateX(-50%);
+}
+.drawer-image-wrap .drawer-image{
+  display:block;
+  width:auto;
+  max-width:100%;
+  max-height:58vh;
+  object-fit:contain;
+  border-radius:0;
+}
+.detail-hotspot{
+  position:absolute;
+  border:3px solid rgba(242,140,40,.88);
+  background:rgba(242,140,40,.12);
+  border-radius:10px;
+  cursor:pointer;
+  transition:.18s;
+}
+.detail-hotspot:hover,.detail-hotspot:focus{
+  background:rgba(242,140,40,.30);
+  border-color:#fff;
+  outline:none;
+}
+.detail-hotspot span{
+  position:absolute;
+  left:7px;
+  top:7px;
+  background:rgba(21,45,64,.92);
+  color:#fff;
+  padding:5px 8px;
+  border-radius:7px;
+  font-weight:700;
+  font-size:11px;
+  white-space:nowrap;
+}
+#d1silver{left:18.5%;top:20.5%;width:45.5%;height:48.5%}
+#d1quarter{left:63.0%;top:23.0%;width:17.5%;height:43.5%}
+#d1bits{left:64.5%;top:65.5%;width:16.0%;height:25.0%}
+#d1torxhex{left:82.0%;top:28.0%;width:13.5%;height:58.0%}
+#d4pocket{left:64%;top:20%;width:10%;height:38%}
+.back-overview{
+  display:none;
+  margin:0 0 10px;
+  padding:8px 11px;
+  border:1px solid #b9c7d0;
+  background:#fff;
+  color:var(--navy);
+  border-radius:9px;
+  cursor:pointer;
+  font-weight:700;
+}
+.back-overview.show{display:inline-block}
+.drawer1-help{
+  display:none;
+  margin:0 0 10px;
+  padding:9px 11px;
+  border-radius:9px;
+  background:#fff7ee;
+  border:1px solid #f2c38f;
+  color:#6d461d;
+  font-weight:700;
+}
+.drawer1-help.show{display:block}
+
+
+.start-screen{
+  padding:22px;
+}
+.start-card{
+  max-width:720px;
+  margin:0 auto;
+  background:#f7f9fb;
+  border:2px solid #d6e0e6;
+  border-radius:16px;
+  padding:22px;
+}
+.start-card h2{margin-top:0}
+.start-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.start-field label{
+  display:block;
+  font-weight:700;
+  margin-bottom:6px;
+}
+.start-field select{
+  width:100%;
+  padding:12px;
+  border:1px solid #aebbc4;
+  border-radius:10px;
+  font:inherit;
+  background:#fff;
+}
+.start-btn{
+  width:100%;
+  margin-top:16px;
+  padding:13px;
+  border:0;
+  border-radius:10px;
+  background:var(--orange);
+  color:#fff;
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+}
+.start-btn:disabled{opacity:.45;cursor:not-allowed}
+.session-banner{
+  display:none;
+  margin-bottom:16px;
+  background:#fff7ee;
+  border:1px solid #f1c58e;
+  border-radius:11px;
+  padding:10px 12px;
+  font-weight:700;
+}
+.session-banner.show{display:block}
+.hidden{display:none!important}
+.submit-status{
+  margin-top:10px;
+  font-size:13px;
+  font-weight:700;
+}
+.submit-status.ok{color:#176329}
+.submit-status.bad{color:#9d2020}
+@media(max-width:650px){
+  .start-grid{grid-template-columns:1fr}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div>
+    <h1>Toolbox Inventory</h1>
+    <p>Select each drawer, compare the tools to the reference photo, and record its status.</p>
+  </div>
+  <div class="progress">
+    <strong id="progressText">0 of 5 drawers checked</strong>
+    <div class="progressbar"><div class="progressfill" id="progressFill"></div></div>
+  </div>
+</header>
+
+<main>
+  <section class="start-screen" id="startScreen">
+    <div class="start-card">
+      <h2>Start Toolbox Inventory</h2>
+      <p>Select your name and team. Your team determines which toolbox is being inventoried.</p>
+      <div class="start-grid">
+        <div class="start-field">
+          <label for="studentSelect">Student</label>
+          <select id="studentSelect">
+            <option value="">Loading roster...</option>
+          </select>
+        </div>
+        <div class="start-field">
+          <label for="teamSelect">Team / Toolbox</label>
+          <select id="teamSelect">
+            <option value="">Select team...</option>
+            <option>Orange</option>
+            <option>Blue</option>
+            <option>Red</option>
+            <option>Green</option>
+            <option>Yellow</option>
+          </select>
+        </div>
+      </div>
+      <button class="start-btn" id="startBtn" disabled>Start Inventory</button>
+    </div>
+  </section>
+
+  <div class="session-banner" id="sessionBanner"></div>
+
+  <div id="inventoryArea" class="hidden">
+  <div class="intro">
+    <strong>Directions:</strong> Click a highlighted drawer on the toolbox. Inspect the drawer in person and compare it with the reference image. Mark whether all tools are present or identify anything missing.
+  </div>
+
+  <div class="toolbox-wrap">
+    <div class="photo-stage">
+      <img src="images/toolbox.jpg" alt="Orange toolbox">
+      <button class="hotspot" id="drawer1" data-drawer="1" aria-label="Open Drawer 1"><span>Drawer 1</span></button>
+      <button class="hotspot" id="drawer2" data-drawer="2" aria-label="Open Drawer 2"><span>Drawer 2</span></button>
+      <button class="hotspot" id="drawer3" data-drawer="3" aria-label="Open Drawer 3"><span>Drawer 3</span></button>
+      <button class="hotspot" id="drawer4" data-drawer="4" aria-label="Open Drawer 4"><span>Drawer 4</span></button>
+      <button class="hotspot" id="drawer5" data-drawer="5" aria-label="Open Drawer 5"><span>Drawer 5</span></button>
+    </div>
+
+    <aside class="side">
+      <h2>Inspection Status</h2>
+      <div class="drawer-list" id="drawerList"></div>
+      <button class="submit" id="submitBtn" disabled>Submit Inventory</button>
+      <div class="note">Submissions are recorded in the ATT Inventory spreadsheet.</div>
+    </aside>
+  </div>
+  </div>
+</main>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="panel">
+    <div class="panel-head">
+      <h2 id="modalTitle">Drawer</h2>
+      <button class="close" id="closeBtn">✕ Close</button>
+    </div>
+    <div class="panel-body">
+      <div class="gallery-tabs" id="galleryTabs"></div>
+      <button class="back-overview" id="backOverview">← Back to Drawer 1 Overview</button>
+      <div class="drawer1-help" id="drawer1Help">Click a tool case or set in the photo to open its detailed reference image.</div>
+      <div class="drawer-image-wrap" id="drawerImageWrap">
+        <img id="drawerImage" class="drawer-image" src="" alt="">
+        <button class="detail-hotspot" id="d1silver" data-detail="threeeighth" aria-label="Open Silver Eagle 3/8 inch set">
+          <span>3/8&quot; Silver Eagle Set</span>
+        </button>
+        <button class="detail-hotspot" id="d1quarter" data-detail="quarter" aria-label="Open quarter inch socket set">
+          <span>1/4&quot; Socket Set</span>
+        </button>
+        <button class="detail-hotspot" id="d1bits" data-detail="bits" aria-label="Open impact bit set">
+          <span>Impact Bit Set</span>
+        </button>
+        <button class="detail-hotspot" id="d1torxhex" data-detail="torxhex" aria-label="Open Torx and hex socket set">
+          <span>Torx / Hex</span>
+        </button>
+        <button class="detail-hotspot" id="d4pocket" data-detail="pocket" aria-label="Open pocket screwdriver set">
+          <span>Pocket Screwdriver Set</span>
+        </button>
+      </div>
+      <div class="check-card">
+        <h3>Drawer Status</h3>
+        <div class="options">
+          <label class="option">
+            <input type="radio" name="drawerStatus" value="present">
+            ✓ All tools present
+          </label>
+          <label class="option">
+            <input type="radio" name="drawerStatus" value="missing">
+            ⚠ Tool(s) missing
+          </label>
+        </div>
+        <div class="missing-box" id="missingBox">
+          <label for="missingText"><strong>What is missing?</strong></label>
+          <textarea id="missingText" placeholder="Example: 10 mm socket, long #2 Phillips screwdriver..."></textarea>
+        </div>
+        <button class="save" id="saveBtn" disabled>Save Drawer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const drawers = {
+  1: {
+    title: 'Drawer 1 — Socket & Bit Sets',
+    description: 'Top compartment',
+    images: [
+      ['Overview','images/drawer1-main.jpg'],
+      ['1/4" Socket Set','images/drawer1-quarter-closeup.png'],
+      ['3/8" Silver Eagle Set','images/drawer1-threeeighth.jpg'],
+      ['Impact Bit Set','images/drawer1-bits.jpg'],
+      ['Torx & Hex Socket Set','images/drawer1-torx-hex.png']
+    ]
+  },
+  2: {
+    title: 'Drawer 2 — 3/8" Impact Sockets & Measuring Tools',
+    description: 'Upper left drawer',
+    images: [['Reference','images/drawer2.jpg']]
+  },
+  3: {
+    title: 'Drawer 3 — Pliers & Diagnostic Tools',
+    description: 'Upper right drawer',
+    images: [['Reference','images/drawer3.jpg']]
+  },
+  4: {
+    title: 'Drawer 4 — Wrenches, Hammers & Screwdrivers',
+    description: 'Middle full-width drawer',
+    images: [
+      ['Overview','images/drawer4.jpg'],
+      ['Pocket Screwdriver Set','images/drawer3-pocket-screwdrivers.jpg']
+    ]
+  },
+  5: {
+    title: 'Drawer 5 — Impact Sockets & Power Tools',
+    description: 'Bottom full-width drawer',
+    images: [['Reference','images/drawer5.jpg']]
+  }
+};
+
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzoXT1sncsBxxI2SqkAstAoWCy3yueUJruZFYuyP4BasBIR7lkrfWK4DXCVSzmINiyR/exec';
+const state = {};
+let currentStudent = '';
+let currentToolbox = '';
+let currentDrawer = null;
+
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modalTitle');
+const galleryTabs = document.getElementById('galleryTabs');
+const drawerImage = document.getElementById('drawerImage');
+const missingBox = document.getElementById('missingBox');
+const missingText = document.getElementById('missingText');
+const saveBtn = document.getElementById('saveBtn');
+const backOverview = document.getElementById('backOverview');
+const drawer1Help = document.getElementById('drawer1Help');
+const detailHotspots = [...document.querySelectorAll('.detail-hotspot')];
+const drawer1Hotspots = detailHotspots.filter(h=>h.id.startsWith('d1'));
+const drawer4Hotspots = detailHotspots.filter(h=>h.id.startsWith('d4'));
+const submitBtn = document.getElementById('submitBtn');
+const startScreen = document.getElementById('startScreen');
+const inventoryArea = document.getElementById('inventoryArea');
+const studentSelect = document.getElementById('studentSelect');
+const teamSelect = document.getElementById('teamSelect');
+const startBtn = document.getElementById('startBtn');
+const sessionBanner = document.getElementById('sessionBanner');
+
+function renderList(){
+  const list = document.getElementById('drawerList');
+  list.innerHTML = '';
+  Object.entries(drawers).forEach(([id,d])=>{
+    const row = document.createElement('div');
+    row.className='drawer-row';
+    row.dataset.drawer=id;
+    const s = state[id];
+    let badge='<span class="badge">Not checked</span>';
+    if(s?.status==='present') badge='<span class="badge ok">✓ Complete</span>';
+    if(s?.status==='missing') badge='<span class="badge bad">⚠ Missing</span>';
+    row.innerHTML=`<div><strong>Drawer ${id}</strong><br><small>${d.description}</small></div>${badge}`;
+    row.addEventListener('click',()=>openDrawer(id));
+    list.appendChild(row);
+
+    const hs = document.querySelector(`.hotspot[data-drawer="${id}"]`);
+    hs.classList.remove('done','missing');
+    if(s?.status==='present') hs.classList.add('done');
+    if(s?.status==='missing') hs.classList.add('missing');
+  });
+
+  const count = Object.keys(state).length;
+  document.getElementById('progressText').textContent=`${count} of 5 drawers checked`;
+  document.getElementById('progressFill').style.width=`${count/5*100}%`;
+  submitBtn.disabled = count !== 5;
+}
+
+function openDrawer(id){
+  id=String(id);
+  currentDrawer=id;
+  const d=drawers[id];
+  modalTitle.textContent=d.title;
+  galleryTabs.innerHTML='';
+
+  // Drawer 1 uses the actual overview photo as an interactive map.
+  if(id==='1'){
+    drawerImage.src=d.images[0][1];
+    drawerImage.alt=d.title + ' overview';
+    detailHotspots.forEach(h=>h.style.display='none');
+    drawer1Hotspots.forEach(h=>h.style.display='block');
+    drawer1Help.textContent='Click a tool case or set in the photo to open its detailed reference image.';
+    drawer1Help.classList.add('show');
+    backOverview.classList.remove('show');
+  }else if(id==='4'){
+    detailHotspots.forEach(h=>h.style.display='none');
+    drawer4Hotspots.forEach(h=>h.style.display='block');
+    drawer1Help.textContent='Click the pocket screwdriver pouch to open the set.';
+    drawer1Help.classList.add('show');
+    backOverview.classList.remove('show');
+    drawerImage.src=d.images[0][1];
+    drawerImage.alt=d.title + ' overview';
+  }else{
+    detailHotspots.forEach(h=>h.style.display='none');
+    drawer1Help.classList.remove('show');
+    backOverview.classList.remove('show');
+
+    d.images.forEach(([label,src],i)=>{
+      const b=document.createElement('button');
+      b.className='tab'+(i===0?' active':'');
+      b.textContent=label;
+      b.onclick=()=>{
+        [...galleryTabs.children].forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        drawerImage.src=src;
+        drawerImage.alt=`${d.title} - ${label}`;
+      };
+      galleryTabs.appendChild(b);
+    });
+    drawerImage.src=d.images[0][1];
+    drawerImage.alt=d.title;
+  }
+
+  document.querySelectorAll('input[name="drawerStatus"]').forEach(r=>r.checked=false);
+  missingText.value=state[id]?.missing || '';
+  const prior=state[id]?.status;
+  if(prior){
+    const radio=document.querySelector(`input[name="drawerStatus"][value="${prior}"]`);
+    if(radio) radio.checked=true;
+  }
+  missingBox.classList.toggle('show',prior==='missing');
+  validate();
+  modal.classList.add('open');
+}
+
+
+function showDrawer1Detail(which){
+  const d=drawers['1'];
+  const map={
+    quarter: d.images[1],
+    threeeighth: d.images[2],
+    bits: d.images[3],
+    torxhex: d.images[4]
+  };
+  const item=map[which];
+  if(!item) return;
+  drawerImage.src=item[1];
+  drawerImage.alt=`${d.title} - ${item[0]}`;
+  detailHotspots.forEach(h=>h.style.display='none');
+  drawer1Help.classList.remove('show');
+  backOverview.classList.add('show');
+}
+
+function showDrawer1Overview(){
+  const d=drawers['1'];
+  drawerImage.src=d.images[0][1];
+  drawerImage.alt=d.title + ' overview';
+  detailHotspots.forEach(h=>h.style.display='block');
+  drawer1Help.classList.add('show');
+  backOverview.classList.remove('show');
+}
+
+detailHotspots.forEach(h=>{
+  h.addEventListener('click',()=>{
+    if(h.dataset.detail==='pocket') showDrawer4Detail();
+    else showDrawer1Detail(h.dataset.detail);
+  });
+});
+
+function showDrawer4Detail(){
+  const d=drawers['4'];
+  drawerImage.src=d.images[1][1];
+  drawerImage.alt=d.title + ' - Pocket Screwdriver Set';
+  detailHotspots.forEach(h=>h.style.display='none');
+  drawer1Help.classList.remove('show');
+  backOverview.classList.add('show');
+  backOverview.textContent='← Back to Drawer 4 Overview';
+}
+backOverview.addEventListener('click',()=>{
+  if(currentDrawer==='4'){
+    const d=drawers['4'];
+    drawerImage.src=d.images[0][1];
+    drawerImage.alt=d.title + ' overview';
+    detailHotspots.forEach(h=>h.style.display='none');
+    drawer4Hotspots.forEach(h=>h.style.display='block');
+    drawer1Help.textContent='Click the pocket screwdriver pouch to open the set.';
+    drawer1Help.classList.add('show');
+    backOverview.classList.remove('show');
+    backOverview.textContent='← Back to Drawer 1 Overview';
+  } else {
+    backOverview.textContent='← Back to Drawer 1 Overview';
+    showDrawer1Overview();
+  }
+});
+
+
+function closeDrawer(){ modal.classList.remove('open'); }
+
+function validate(){
+  const selected=document.querySelector('input[name="drawerStatus"]:checked')?.value;
+  if(selected==='missing'){
+    missingBox.classList.add('show');
+    saveBtn.disabled = !missingText.value.trim();
+  }else{
+    missingBox.classList.remove('show');
+    saveBtn.disabled = !selected;
+  }
+}
+
+document.querySelectorAll('.hotspot').forEach(h=>h.addEventListener('click',()=>openDrawer(h.dataset.drawer)));
+document.getElementById('closeBtn').addEventListener('click',closeDrawer);
+modal.addEventListener('click',e=>{ if(e.target===modal) closeDrawer(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+
+document.querySelectorAll('input[name="drawerStatus"]').forEach(r=>r.addEventListener('change',validate));
+missingText.addEventListener('input',validate);
+
+saveBtn.addEventListener('click',()=>{
+  const selected=document.querySelector('input[name="drawerStatus"]:checked')?.value;
+  state[currentDrawer]={
+    status:selected,
+    missing:selected==='missing'?missingText.value.trim():''
+  };
+  
+async function loadRoster(){
+  try{
+    const res = await fetch(WEB_APP_URL + '?action=roster');
+    const data = await res.json();
+
+    if(!data.success) throw new Error(data.error || 'Roster load failed');
+
+    studentSelect.innerHTML = '<option value="">Select your name...</option>';
+    data.students.forEach(name=>{
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      studentSelect.appendChild(opt);
+    });
+  }catch(err){
+    console.error(err);
+    studentSelect.innerHTML = '<option value="">Unable to load roster</option>';
+  }
+  validateStart();
+}
+
+function validateStart(){
+  startBtn.disabled = !(studentSelect.value && teamSelect.value);
+}
+
+studentSelect.addEventListener('change', validateStart);
+teamSelect.addEventListener('change', validateStart);
+
+startBtn.addEventListener('click', ()=>{
+  currentStudent = studentSelect.value;
+  currentToolbox = teamSelect.value;
+
+  sessionBanner.textContent = `${currentStudent} — ${currentToolbox} Team / ${currentToolbox} Toolbox`;
+  sessionBanner.classList.add('show');
+  startScreen.classList.add('hidden');
+  inventoryArea.classList.remove('hidden');
+
+  document.querySelector('header h1').textContent = `${currentToolbox} Toolbox Inventory`;
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+loadRoster();
+
+renderList();
+  closeDrawer();
+  showToast(`Drawer ${currentDrawer} saved`);
+});
+
+submitBtn.addEventListener('click', async ()=>{
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Submitting...';
+
+  const payload = {
+    student: currentStudent,
+    toolbox: currentToolbox,
+    drawers: state
+  };
+
+  try{
+    await fetch(WEB_APP_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    });
+
+    submitBtn.textContent = 'Submitted ✓';
+    showToast('Inventory submitted successfully.');
+  }catch(err){
+    console.error(err);
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Submit Inventory';
+    showToast('Submission failed. Please try again.');
+  }
+});
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+
+async function loadRoster(){
+  try{
+    const res = await fetch(WEB_APP_URL + '?action=roster');
+    const data = await res.json();
+
+    if(!data.success) throw new Error(data.error || 'Roster load failed');
+
+    studentSelect.innerHTML = '<option value="">Select your name...</option>';
+    data.students.forEach(name=>{
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      studentSelect.appendChild(opt);
+    });
+  }catch(err){
+    console.error(err);
+    studentSelect.innerHTML = '<option value="">Unable to load roster</option>';
+  }
+  validateStart();
+}
+
+function validateStart(){
+  startBtn.disabled = !(studentSelect.value && teamSelect.value);
+}
+
+studentSelect.addEventListener('change', validateStart);
+teamSelect.addEventListener('change', validateStart);
+
+startBtn.addEventListener('click', ()=>{
+  currentStudent = studentSelect.value;
+  currentToolbox = teamSelect.value;
+
+  sessionBanner.textContent = `${currentStudent} — ${currentToolbox} Team / ${currentToolbox} Toolbox`;
+  sessionBanner.classList.add('show');
+  startScreen.classList.add('hidden');
+  inventoryArea.classList.remove('hidden');
+
+  document.querySelector('header h1').textContent = `${currentToolbox} Toolbox Inventory`;
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+loadRoster();
+
+renderList();
+</script>
+</body>
+</html>
