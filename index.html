@@ -641,12 +641,14 @@ function openDrawer(id){
     drawer1Help.textContent='Click a tool case or set in the photo to open its detailed reference image.';
     drawer1Help.classList.add('show');
     backOverview.classList.remove('show');
+    backOverview.textContent='← Back to Drawer 1 Overview';
   }else if(id==='4'){
     detailHotspots.forEach(h=>h.style.display='none');
     drawer4Hotspots.forEach(h=>h.style.display='block');
     drawer1Help.textContent='Click the pocket screwdriver pouch to open the set.';
     drawer1Help.classList.add('show');
     backOverview.classList.remove('show');
+    backOverview.textContent='← Back to Drawer 4 Overview';
     drawerImage.src=d.images[0][1];
     drawerImage.alt=d.title + ' overview';
   }else{
@@ -704,7 +706,8 @@ function showDrawer1Overview(){
   const d=drawers['1'];
   drawerImage.src=d.images[0][1];
   drawerImage.alt=d.title + ' overview';
-  detailHotspots.forEach(h=>h.style.display='block');
+  detailHotspots.forEach(h=>h.style.display='none');
+  drawer1Hotspots.forEach(h=>h.style.display='block');
   drawer1Help.classList.add('show');
   backOverview.classList.remove('show');
 }
@@ -770,51 +773,7 @@ saveBtn.addEventListener('click',()=>{
     status:selected,
     missing:selected==='missing'?missingText.value.trim():''
   };
-  
-async function loadRoster(){
-  try{
-    const res = await fetch(WEB_APP_URL + '?action=roster');
-    const data = await res.json();
-
-    if(!data.success) throw new Error(data.error || 'Roster load failed');
-
-    studentSelect.innerHTML = '<option value="">Select your name...</option>';
-    data.students.forEach(name=>{
-      const opt = document.createElement('option');
-      opt.value = name;
-      opt.textContent = name;
-      studentSelect.appendChild(opt);
-    });
-  }catch(err){
-    console.error(err);
-    studentSelect.innerHTML = '<option value="">Unable to load roster</option>';
-  }
-  validateStart();
-}
-
-function validateStart(){
-  startBtn.disabled = !(studentSelect.value && teamSelect.value);
-}
-
-studentSelect.addEventListener('change', validateStart);
-teamSelect.addEventListener('change', validateStart);
-
-startBtn.addEventListener('click', ()=>{
-  currentStudent = studentSelect.value;
-  currentToolbox = teamSelect.value;
-
-  sessionBanner.textContent = `${currentStudent} — ${currentToolbox} Team / ${currentToolbox} Toolbox`;
-  sessionBanner.classList.add('show');
-  startScreen.classList.add('hidden');
-  inventoryArea.classList.remove('hidden');
-
-  document.querySelector('header h1').textContent = `${currentToolbox} Toolbox Inventory`;
-  window.scrollTo({top:0, behavior:'smooth'});
-});
-
-loadRoster();
-
-renderList();
+  renderList();
   closeDrawer();
   showToast(`Drawer ${currentDrawer} saved`);
 });
